@@ -36,6 +36,8 @@ VM. The configured Windows Downloads share is mounted read-only at
 ## Install on the existing VM
 
 Run these commands inside the installed NixOS system, logged in as `maxm`.
+For the initial block below, start Bash with `bash` if using Fish or Nushell;
+the timestamped backup uses Bash command substitution.
 The existing disk layout is preserved: copy the generated hardware file rather
 than partitioning or installing NixOS again. The checked-in placeholder
 intentionally prevents rebuilding until this step is complete.
@@ -56,14 +58,14 @@ of cloning it again. Preserve local edits before updating.
 Build without changing the running system:
 
 ```sh
-sudo nixos-rebuild build --flake .#vm-windows
+sudo nixos-rebuild build --flake '.#vm-windows'
 ```
 
 If the build succeeds, install it for the next boot and reboot. This avoids
 restarting the desktop midway through installation:
 
 ```sh
-sudo nixos-rebuild boot --flake .#vm-windows
+sudo nixos-rebuild boot --flake '.#vm-windows'
 sudo reboot
 ```
 
@@ -107,7 +109,7 @@ in the upstream i3 module does not establish a fix for Windows Workstation.
 ## Verify and update
 
 ```sh
-echo "$XDG_SESSION_TYPE"
+printenv XDG_SESSION_TYPE
 systemctl is-active vmware
 systemctl is-active home-manager-maxm
 systemctl --failed --no-pager
@@ -118,7 +120,7 @@ Clipboard sharing also requires VMware Guest Isolation copy/paste enabled.
 The profile explicitly sets `virtualisation.vmware.guest.headless = false`.
 
 For subsequent updates, use `git pull --ff-only`, then build and run
-`sudo nixos-rebuild boot --flake .#vm-windows` from this checkout.
+`sudo nixos-rebuild boot --flake '.#vm-windows'` from this checkout.
 The original Makefile's default target is ARM; specify
 `make switch NIXNAME=vm-windows` if using it for an immediate switch.
 

@@ -32,6 +32,9 @@ aliases. The Fish SSH-agent setup tolerates an account with no SSH key yet.
 Oh My Posh uses the same pinned unstable package set as Nushell to avoid the
 older generated prompt's string/integer command-duration mismatch. The public
 prompt theme is unchanged.
+Atuin's Nushell hook backports the upstream `atuin_up_arrow` binding name.
+Ctrl+R and Up-arrow actions are retained, and the Atuin package version is
+unchanged; this avoids the newer Nushell warning about duplicate names.
 
 The pinned direnv-instant source is retained. Its `blocking_envrc_calls_tmux`
 integration test passed on the CI host but failed in Max's VMware build waiting

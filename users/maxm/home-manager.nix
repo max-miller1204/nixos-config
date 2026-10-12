@@ -7,6 +7,17 @@ let
   }) { inherit config lib pkgs; };
   upstreamGit = upstream.programs.git;
   upstreamJj = builtins.fromTOML (builtins.readFile ../mitchellh/jujutsu.toml);
+  # Backport Atuin's upstream unique-name fix without rebuilding the application.
+  atuinNu = pkgs.runCommand "atuin-nushell-config.nu" {
+    nativeBuildInputs = [ pkgs.writableTmpDirAsHomeHook ];
+  } ''
+    ${lib.getExe config.programs.atuin.package} init nu ${lib.escapeShellArgs config.programs.atuin.flags} > "$out"
+    ${lib.optionalString (!(builtins.elem "--disable-up-arrow" config.programs.atuin.flags)) ''
+      substituteInPlace "$out" \
+        --replace-fail $'name: atuin\n            modifier: none' \
+        $'name: atuin_up_arrow\n            modifier: none'
+    ''}
+  '';
   portable = upstream // {
     home = upstream.home // {
       stateVersion = "26.05";
@@ -74,7 +85,11 @@ in {
     # The approved LazyVim starter needs this CLI on its first launch.
     extraPackages = [ pkgs.tree-sitter ];
   };
-  programs.nushell.extraConfig = builtins.readFile ./config.nu;
+  # Use the same Atuin hook with only its Up-arrow binding name corrected.
+  programs.atuin.enableNushellIntegration = false;
+  programs.nushell.extraConfig = (builtins.readFile ./config.nu) + ''
+    source ${atuinNu}
+  '';
   programs.oh-my-posh = {
     # Match the newer Nushell; the stable prompt assigns a string to an int.
     package = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.oh-my-posh;

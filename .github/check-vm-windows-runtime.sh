@@ -22,12 +22,14 @@ if [ "${PROMPT_ONLY:-false}" != "true" ]; then
     -c 'if not (nu-check --debug $env.NU_CONFIG_CHECK) { exit 1 }'
 fi
 ompPath=$(buildAttr programs.oh-my-posh.package)
-"$ompPath/bin/oh-my-posh" init nu --print --config "$auditDir/users/mitchellh/omp.json" >"$auditDir/omp-init.nu"
-printf '\n$env.config.show_banner = false\n$env.PROMPT_INDICATOR = "NU_TEST> "\n' >>"$auditDir/omp-init.nu"
+atuinPath=$(buildAttr programs.atuin.package)
+nuConfig=$(buildAttr 'home.file."/home/maxm/.config/nushell/config.nu".source')
+ompConfig=$(buildAttr 'xdg.configFile."oh-my-posh/config.json".source')
+export PATH="$atuinPath/bin:$ompPath/bin:$PATH"
 # The CMD_DURATION_MS type error appears only after a real REPL command.
-python3 - "$nuPath/bin/nu" "$auditDir/omp-init.nu" "$auditDir/omp-repl.log" <<'PY'
-import fcntl, os, pty, re, select, signal, struct, sys, tempfile, termios, time
-nu, init, log = sys.argv[1:]
+python3 - "$nuPath/bin/nu" "$nuConfig" "$ompConfig" "$auditDir/omp-repl.log" <<'PY'
+import fcntl, json, os, pty, re, select, shutil, signal, struct, sys, tempfile, termios, time
+nu, init, omp_config, log = sys.argv[1:]
 pid, fd = pty.fork()
 if pid == 0:
     prompt_home = tempfile.mkdtemp(prefix="nu-prompt-home-")
@@ -36,7 +38,14 @@ if pid == 0:
                       XDG_DATA_HOME=prompt_home + "/.local/share",
                       XDG_STATE_HOME=prompt_home + "/.local/state",
                       XDG_CACHE_HOME=prompt_home + "/.cache")
-    os.execl(nu, nu, "--env-config", "/dev/null", "--config", init)
+    os.makedirs(prompt_home + "/.config/oh-my-posh")
+    shutil.copyfile(omp_config, prompt_home + "/.config/oh-my-posh/config.json")
+    with open(init) as stream:
+        config = stream.read().replace("/home/maxm", prompt_home)
+    init_copy = prompt_home + "/config.nu"
+    with open(init_copy, "w") as stream:
+        stream.write(config + '\n$env.PROMPT_INDICATOR = "NU_TEST> "\n')
+    os.execl(nu, nu, "--env-config", "/dev/null", "--config", init_copy)
 fcntl.ioctl(fd, termios.TIOCSWINSZ, struct.pack("HHHH", 24, 120, 0, 0))
 output = bytearray()
 sent = False
@@ -57,7 +66,7 @@ while time.monotonic() < deadline:
             os.write(fd, b"\x1b[1;1R" * (queries - position_replies))
             position_replies = queries
         if not sent and b"NU_TEST> " in output:
-            os.write(fd, b'sleep 100ms\rprint "OMP_PROMPT_CHECK"\rexit\r')
+            os.write(fd, b'sleep 100ms\rprint "OMP_PROMPT_CHECK"\rprint ($env.config.keybindings | where {|b| $b.name == "atuin" or $b.name == "atuin_up_arrow"} | get name | to json --raw)\rexit\r')
             sent = True
     ended, result = os.waitpid(pid, os.WNOHANG)
     if ended:
@@ -81,6 +90,9 @@ if os.waitstatus_to_exitcode(status) != 0 or not re.search(r"[\r\n]OMP_PROMPT_CH
     raise SystemExit("Nushell prompt REPL check did not complete")
 if re.search(r"nu::|Error:|expected int|Type mismatch", clean):
     raise SystemExit("Nushell prompt REPL check reported an error")
+bindings = re.findall(r'^\["atuin".*\]\r?$', clean, flags=re.M)
+if not bindings or sorted(json.loads(bindings[-1])) != ["atuin", "atuin_up_arrow"]:
+    raise SystemExit("Atuin Ctrl+R and Up-arrow bindings were not both retained")
 PY
 if [ "${PROMPT_ONLY:-false}" = "true" ]; then exit 0; fi
 direnvPath=$(buildAttr programs.direnv-instant.finalPackage)

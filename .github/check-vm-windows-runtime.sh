@@ -21,17 +21,25 @@ NU_CONFIG_CHECK="$auditDir/users/maxm/config.nu" "$nuPath/bin/nu" --no-config-fi
   -c 'if not (nu-check --debug $env.NU_CONFIG_CHECK) { exit 1 }'
 ompPath=$(buildAttr programs.oh-my-posh.package)
 "$ompPath/bin/oh-my-posh" init nu --print --config "$auditDir/users/mitchellh/omp.json" >"$auditDir/omp-init.nu"
+printf '\n$env.config.show_banner = false\n$env.PROMPT_INDICATOR = "NU_TEST> "\n' >>"$auditDir/omp-init.nu"
 # The CMD_DURATION_MS type error appears only after a real REPL command.
 python3 - "$nuPath/bin/nu" "$auditDir/omp-init.nu" "$auditDir/omp-repl.log" <<'PY'
-import os, pty, re, select, signal, sys, tempfile, time
+import fcntl, os, pty, re, select, signal, struct, sys, tempfile, termios, time
 nu, init, log = sys.argv[1:]
 pid, fd = pty.fork()
 if pid == 0:
-    os.environ.update(HOME=tempfile.mkdtemp(prefix="nu-prompt-home-"), TERM="xterm-256color")
-    os.execl(nu, nu, "--config", init)
+    prompt_home = tempfile.mkdtemp(prefix="nu-prompt-home-")
+    os.environ.update(HOME=prompt_home, TERM="xterm-256color",
+                      XDG_CONFIG_HOME=prompt_home + "/.config",
+                      XDG_DATA_HOME=prompt_home + "/.local/share",
+                      XDG_STATE_HOME=prompt_home + "/.local/state",
+                      XDG_CACHE_HOME=prompt_home + "/.cache")
+    os.execl(nu, nu, "--env-config", "/dev/null", "--config", init)
+fcntl.ioctl(fd, termios.TIOCSWINSZ, struct.pack("HHHH", 24, 120, 0, 0))
 output = bytearray()
 sent = False
 status = None
+position_replies = 0
 deadline = time.monotonic() + 30
 while time.monotonic() < deadline:
     if select.select([fd], [], [], 0.2)[0]:
@@ -42,7 +50,11 @@ while time.monotonic() < deadline:
         if not chunk:
             break
         output.extend(chunk)
-        if not sent:
+        queries = bytes(output).count(b"\x1b[6n")
+        if queries > position_replies:
+            os.write(fd, b"\x1b[1;1R" * (queries - position_replies))
+            position_replies = queries
+        if not sent and b"NU_TEST> " in output:
             os.write(fd, b'sleep 100ms\rprint "OMP_PROMPT_CHECK"\rexit\r')
             sent = True
     ended, result = os.waitpid(pid, os.WNOHANG)
@@ -50,7 +62,11 @@ while time.monotonic() < deadline:
         status = result
         break
 if status is None:
-    ended, status = os.waitpid(pid, os.WNOHANG)
+    for _ in range(20):
+        ended, status = os.waitpid(pid, os.WNOHANG)
+        if ended:
+            break
+        time.sleep(0.05)
     if not ended:
         os.kill(pid, signal.SIGKILL)
         _, status = os.waitpid(pid, 0)

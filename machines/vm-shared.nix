@@ -101,9 +101,18 @@
 
     # For hypervisors that support auto-resizing, this script forces it.
     # I've noticed not everyone listens to the udev events so this is a hack.
-    (writeShellScriptBin "xrandr-auto" ''
+    (writeShellScriptBin "xrandr-auto" (if currentSystemName == "vm-windows" then ''
+      set -euo pipefail
+      if [ -z "''${DISPLAY:-}" ]; then
+        echo "xrandr-auto must be run inside an X11 desktop session." >&2
+        exit 1
+      fi
+      while IFS= read -r output; do
+        ${pkgs.xrandr}/bin/xrandr --output "$output" --auto
+      done < <(${pkgs.xrandr}/bin/xrandr --query | ${pkgs.gawk}/bin/awk '$2 == "connected" { print $1 }')
+    '' else ''
       ${pkgs.xrandr}/bin/xrandr --output Virtual-1 --auto
-    '')
+    ''))
   ] ++ lib.optionals (currentSystemName == "vm-aarch64") [
     # This is needed for the vmware user tools clipboard to work.
     # You can test if you don't need this by deleting this and seeing
@@ -112,14 +121,14 @@
   ];
 
   # Our default non-specialised desktop environment.
-  services.xserver = lib.mkIf (config.specialisation != {}) {
+  services.xserver = lib.mkIf (config.specialisation != {} && currentSystemName != "vm-windows") {
     enable = true;
     xkb.layout = "us";
   };
-  services.desktopManager = lib.mkIf (config.specialisation != {}) {
+  services.desktopManager = lib.mkIf (config.specialisation != {} && currentSystemName != "vm-windows") {
     gnome.enable = true;
   };
-  services.displayManager = lib.mkIf (config.specialisation != {}) {
+  services.displayManager = lib.mkIf (config.specialisation != {} && currentSystemName != "vm-windows") {
     gdm.enable = true;
   };
 

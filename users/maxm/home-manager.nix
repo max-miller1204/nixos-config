@@ -1,66 +1,95 @@
-{ inputs, ... }:
-{ pkgs, ... }: {
-  home.stateVersion = "26.05";
+{ isWSL, inputs, currentSystemName, ... }:
+{ config, lib, pkgs, ... }:
+let
+  # Import the complete public environment; adapt identity and unavailable files.
+  upstream = (import ../mitchellh/home-manager.nix {
+    inherit isWSL inputs currentSystemName;
+  }) { inherit config lib pkgs; };
+  upstreamGit = upstream.programs.git;
+  upstreamJj = builtins.fromTOML (builtins.readFile ../mitchellh/jujutsu.toml);
+  portable = upstream // {
+    home = upstream.home // {
+      stateVersion = "26.05";
+      # These refer to Mitchell's private 1Password vault, not to Max's account.
+      sessionVariables = builtins.removeAttrs upstream.home.sessionVariables [
+        "AMP_API_KEY" "OPENAI_API_KEY"
+      ];
+    };
+    programs = upstream.programs // {
+      git = upstreamGit // {
+        signing = { signByDefault = false; };
+        settings = lib.recursiveUpdate
+          (builtins.removeAttrs upstreamGit.settings [ "user" "github" "aliases" ]) {
+            user.name = "Max Miller";
+            user.email = "196500602+max-miller1204@users.noreply.github.com";
+            github.user = "max-miller1204";
+            alias = upstreamGit.settings.aliases;
+            credential.helper = "";
+          };
+      };
+      fish = upstream.programs.fish // {
+        interactiveShellInit = builtins.replaceStrings
+          [ (builtins.readFile ../mitchellh/config.fish) ]
+          [ (builtins.readFile ./config.fish) ]
+          upstream.programs.fish.interactiveShellInit;
+      };
+      alacritty = upstream.programs.alacritty // {
+        settings = (builtins.removeAttrs upstream.programs.alacritty.settings [ "key_bindings" ]) // {
+          keyboard.bindings = [
+            { key = "K"; mods = "Control|Shift"; action = "ClearHistory"; }
+            { key = "V"; mods = "Control|Shift"; action = "Paste"; }
+            { key = "C"; mods = "Control|Shift"; action = "Copy"; }
+            { key = "Key0"; mods = "Control"; action = "ResetFontSize"; }
+            { key = "Equals"; mods = "Control"; action = "IncreaseFontSize"; }
+            { key = "Minus"; mods = "Control"; action = "DecreaseFontSize"; }
+          ];
+        };
+      };
+    };
+    xdg = upstream.xdg // {
+      configFile = upstream.xdg.configFile // {
+        "i3/config" = { source = ./i3; };
+        "rofi/config.rasi" = { source = ./rofi; };
+        "ghostty/config" = { source = ./ghostty.linux; };
+        "nvim/init.lua" = { force = false; };
+        "nvim/lua" = { source = ./nvim/lua; };
+      };
+    };
+    xresources.extraConfig = builtins.readFile ./Xresources;
+  };
+in {
+  imports = [ portable ];
+  # Ghostty is launched by his i3 config but was not in the public package list.
+  # Compiler tools also let LazyVim build parsers and run project tooling.
   home.packages = with pkgs; [
-    bat eza fd fzf gh htop jq ripgrep tree nodejs go
-    ghostty rofi xss-lock xsetroot setxkbmap
+    ghostty xss-lock xsetroot setxkbmap gcc gnumake unzip wget go
   ];
-  home.sessionVariables.EDITOR = "nvim";
-  home.sessionPath = [ "$HOME/.local/bin" ];
-  xdg.enable = true;
   xsession.enable = true;
-  xresources.extraConfig = builtins.readFile ./Xresources;
-  xdg.configFile = {
-    "i3/config".source = ./i3;
-    "i3status/config".source = ./i3status;
-    "rofi/config.rasi".source = ./rofi;
-    "ghostty/config".text = ''
-      font-family = JetBrains Mono
-      font-size = 12
-      background = 1d1f21
-      foreground = c5c8c6
-      mouse-hide-while-typing = true
-      keybind = ctrl+shift+c=copy_to_clipboard
-      keybind = ctrl+shift+v=paste_from_clipboard
-    '';
-  };
-  programs.bash.enable = true;
-  programs.fish = {
-    enable = true;
-    shellAliases = {
-      gs = "git status";
-      ga = "git add";
-      gc = "git commit";
-      gco = "git checkout";
-      pbcopy = "xclip -selection clipboard";
-      pbpaste = "xclip -selection clipboard -o";
-    };
-    interactiveShellInit = ''
-      set -g fish_greeting
-      set -g theme_color_scheme dracula
-    '';
-    plugins = [{ name = "bobthefish"; src = inputs.theme-bobthefish; }];
-  };
-  programs.git = {
-    enable = true;
-    settings = {
-      user.name = "Max Miller";
-      user.email = "196500602+max-miller1204@users.noreply.github.com";
-      init.defaultBranch = "main";
-    };
-  };
+  home.shell.enableNushellIntegration = lib.mkForce true;
+  home.pointerCursor.size = lib.mkForce 24;
   programs.neovim = {
-    enable = true;
     defaultEditor = true;
     viAlias = true;
     vimAlias = true;
-    initLua = ''
-      vim.opt.number = true
-      vim.opt.expandtab = true
-      vim.opt.shiftwidth = 2
-      vim.opt.tabstop = 2
-      vim.opt.termguicolors = true
-    '';
   };
-  programs.direnv = { enable = true; nix-direnv.enable = true; };
+  programs.nushell.extraConfig = builtins.readFile ./config.nu;
+  programs.oh-my-posh = {
+    settings = builtins.fromJSON (builtins.readFile ../mitchellh/omp.json);
+    enableBashIntegration = false;
+    enableFishIntegration = false;
+    enableNushellIntegration = true;
+  };
+  programs.jujutsu.settings = upstreamJj // {
+    user = {
+      name = "Max Miller";
+      email = "196500602+max-miller1204@users.noreply.github.com";
+    };
+    signing = upstreamJj.signing // { behavior = "never"; };
+    aliases = upstreamJj.aliases // { b = [ "bookmark" ]; };
+  };
+  programs.go.env.GOPRIVATE = lib.mkForce [ "github.com/max-miller1204" ];
+  programs.direnv.config.whitelist = lib.mkForce {
+    prefix = [ "${config.home.homeDirectory}/Developer" ];
+    exact = [ "${config.home.homeDirectory}/.envrc" ];
+  };
 }

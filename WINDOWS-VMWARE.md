@@ -1,11 +1,37 @@
 # VMware Workstation on Windows
 
 The `vm-windows` target is an x86_64 NixOS 26.05 system for Max's VMware VM.
-It keeps the existing `maxm` account and password and uses i3 on X11 with
-LightDM, VMware desktop tools, Ghostty, Rofi, Fish, Neovim, and development tools.
-The i3 colors and keybindings are adapted from Mitchell's configuration. Private
-scripts and his international keyboard layout are omitted. Fonts and DPI suit
-a standard Windows display rather than an Apple Retina VM.
+It imports Mitchell's entire public Home Manager environment and shared VM
+configuration, with a small adapter for the existing `maxm` account and Windows.
+The default desktop is i3 on X11 with LightDM and VMware desktop integration.
+The upstream Plasma, i3, and GNOME/IBus specialisations remain in the boot menu.
+
+This includes the public package list, Fish plugins/prompt/functions, Bash setup,
+Nushell, Atuin, Oh My Posh, Starship, Git, Jujutsu, Go/gopls, Zig, Clang, Valgrind,
+Node, Neovim nightly, 1Password CLI, Chezmoi, Claude Code, Codex, Ghostty, Kitty,
+Alacritty, Rofi, Chromium, Firefox, Zathura, and the original CLI utilities.
+The shared VM configuration includes Docker, Tailscale, Flatpak, Snap, input
+methods, SSH, and the xrandr display-size workaround.
+
+## What cannot be copied from the public repository
+
+His current Neovim setup loads `config.lazy`, but those Lua files are not in this
+repository. At Max's request the official LazyVim starter is provided instead;
+its source commit and license are recorded in `users/maxm/nvim/README.md`.
+Neovim downloads its plugins on first launch. This is not a claim to reproduce
+Mitchell's unavailable private editor customisations.
+
+His passwords, SSH/GPG keys, 1Password vault references, private `devtty` script,
+licensed fonts, project dotfiles, and macOS host applications are not installed.
+Git/Jujutsu use Max's identity and do not require Mitchell's signing key.
+The packaged account-based tools use Max's own authentication when configured.
+The public Nushell and Oh My Posh files are wired up without the private vault
+aliases. The Fish SSH-agent setup tolerates an account with no SSH key yet.
+
+Disk identifiers, username/password, time zone, US keyboard layout, fonts/DPI,
+cursor size, clipboard shortcuts, and the enabled firewall are adapted to this
+VM. The configured Windows Downloads share is mounted read-only at
+`/host/Downloads` on access. It does not block boot if sharing is disabled.
 
 ## Install on the existing VM
 
@@ -62,9 +88,21 @@ backup; move the old backup aside and restart `home-manager-maxm.service`.
 | Super+Shift+F | Toggle fullscreen |
 | Super+R | Resize/move mode; Escape leaves the mode |
 | Super+Backspace | Logout/reboot/shutdown menu |
+| Super+Ctrl+F | Reapply the preferred display resolution |
 
 Terminal copy/paste uses Ctrl+Shift+C and Ctrl+Shift+V.
 These are Mitchell's keybindings, so Super+D is a split command, not the launcher.
+
+## VMware fullscreen sizing
+
+In VMware, enable **View > Autosize > Autofit Guest**, then enter fullscreen.
+The desktop tools normally update the resolution as the window changes size.
+If the guest remains small or has borders, run `xrandr-auto` inside the VM or
+press Super+Ctrl+F. The helper discovers connected outputs instead of assuming
+the output is named `Virtual-1`, and also runs once when i3 starts.
+This includes the workaround; fullscreen behaviour still needs verification
+in the actual VMware GUI. The Apple Silicon/Fusion-specific resolution comment
+in the upstream i3 module does not establish a fix for Windows Workstation.
 
 ## Verify and update
 
@@ -84,7 +122,10 @@ For subsequent updates, use `git pull --ff-only`, then build and run
 The original Makefile's default target is ARM; specify
 `make switch NIXNAME=vm-windows` if using it for an immediate switch.
 
-The GitHub Actions check builds the entire profile using a CI-only hardware
-fixture and validates the i3 and Rofi configuration. Your actual hardware file
-still needs a build inside the VM. If a new generation fails to boot, select the
-previous working generation from the NixOS boot menu.
+The GitHub Actions check builds the entire profile (including desktop
+specialisations) using a CI-only hardware fixture, validates i3/Rofi/Ghostty and
+shell configuration, exercises the display helper under a virtual X server,
+and launches Neovim headlessly to bootstrap LazyVim. It cannot verify VMware's
+GUI behaviour or log in to Max's external accounts. Your actual hardware file
+still needs a build inside the VM. If a new generation fails to boot, select
+the previous working generation from the NixOS boot menu.

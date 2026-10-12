@@ -44,6 +44,8 @@ exec --no-startup-id xsetroot -solid $back
 
 # Keyboard layout settings
 exec --no-startup-id setxkbmap -layout us
+exec --no-startup-id fcitx5 -d
+exec --no-startup-id xrandr-auto
 
 
 #----------------------------------------------------------------------
@@ -57,6 +59,7 @@ bindsym $mod+o exec rofi -show run
 # start a terminal
 bindsym $mod+n exec ghostty --gtk-single-instance=true
 bindsym $mod+Return exec xfce4-terminal
+bindsym $mod+Ctrl+f exec --no-startup-id xrandr-auto
 bindsym $mod+d split h
 bindsym $mod+Shift+d split v
 

@@ -7,10 +7,8 @@
   users.users.max = {
     isNormalUser = true;
     home = "/home/max";
-    extraGroups = [ "wheel" ];
+    extraGroups = [ "wheel" "docker" ];
     shell = pkgs.fish;
   };
-  # WSL login is controlled by the Windows account. Set a Linux password
-  # before enabling password-required sudo.
-  security.sudo.wheelNeedsPassword = false;
+  security.sudo.wheelNeedsPassword = true;
 }

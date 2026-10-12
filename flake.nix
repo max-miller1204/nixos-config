@@ -101,9 +101,14 @@
       user   = "mitchellh";
     };
 
-    nixosConfigurations.wsl = mkSystem "wsl" {
+    nixosConfigurations.vm-windows = mkSystem "vm-windows" {
       system = "x86_64-linux";
       user   = "max";
+    };
+
+    nixosConfigurations.wsl = mkSystem "wsl" {
+      system = "x86_64-linux";
+      user   = "mitchellh";
       wsl    = true;
     };
 

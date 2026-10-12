@@ -13,8 +13,8 @@
       ga = "git add";
       gc = "git commit";
       gco = "git checkout";
-      pbcopy = "clip.exe";
-      pbpaste = "powershell.exe -NoProfile -Command Get-Clipboard";
+      pbcopy = "xclip -selection clipboard";
+      pbpaste = "xclip -selection clipboard -o";
     };
     interactiveShellInit = ''
       set -g fish_greeting

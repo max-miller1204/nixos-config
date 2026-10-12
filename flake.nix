@@ -103,7 +103,7 @@
 
     nixosConfigurations.wsl = mkSystem "wsl" {
       system = "x86_64-linux";
-      user   = "mitchellh";
+      user   = "max";
       wsl    = true;
     };
 

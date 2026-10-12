@@ -28,6 +28,12 @@ The packaged account-based tools use Max's own authentication when configured.
 The public Nushell and Oh My Posh files are wired up without the private vault
 aliases. The Fish SSH-agent setup tolerates an account with no SSH key yet.
 
+The pinned direnv-instant source is retained. Its `blocking_envrc_calls_tmux`
+integration test passed on the CI host but failed in Max's VMware build waiting
+for the daemon to exit after Ctrl+C. This profile skips only that test and
+retains the remaining upstream tests. The tmux Ctrl+C cancellation behaviour
+is therefore not validated by the adapted package build.
+
 Disk identifiers, username/password, time zone, US keyboard layout, fonts/DPI,
 cursor size, clipboard shortcuts, and the enabled firewall are adapted to this
 VM. The configured Windows Downloads share is mounted read-only at

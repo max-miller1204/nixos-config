@@ -8,20 +8,24 @@ git archive HEAD | tar -x -C "$auditDir"
 cp "$auditDir/.github/fixtures/vm-windows-hardware.nix" "$auditDir/machines/hardware/vm-windows.nix"
 target="$auditDir#nixosConfigurations.vm-windows.config.home-manager.users.maxm"
 buildAttr() { nix build --no-link --print-out-paths "$target.$1"; }
-ghosttyPath=$(nix build --no-link --print-out-paths "$target.home.packages" \
-  --apply 'ps: builtins.head (builtins.filter (p: (p.pname or "") == "ghostty") ps)')
+buildHomePackage() {
+  nix build --no-link --print-out-paths --impure --expr \
+    "let ps = (builtins.getFlake \"$auditDir\").nixosConfigurations.vm-windows.config.home-manager.users.maxm.home.packages; in builtins.head (builtins.filter ($1) ps)"
+}
+ghosttyPath=$(buildHomePackage 'p: (p.pname or "") == "ghostty"')
 fishPath=$(buildAttr programs.fish.package)
 nuPath=$(buildAttr programs.nushell.package)
 "$ghosttyPath/bin/ghostty" +validate-config --config-file="$auditDir/users/maxm/ghostty.linux"
 "$fishPath/bin/fish" --no-execute "$auditDir/users/maxm/config.fish"
 NU_CONFIG_CHECK="$auditDir/users/maxm/config.nu" "$nuPath/bin/nu" --no-config-file \
   -c 'if not (nu-check --debug $env.NU_CONFIG_CHECK) { exit 1 }'
+direnvPath=$(buildAttr programs.direnv-instant.finalPackage)
+"$direnvPath/bin/direnv-instant" --help >/dev/null
 
 nvimPath=$(buildAttr programs.neovim.finalPackage)
 initPath=$(buildAttr 'xdg.configFile."nvim/init.lua".source')
 luaPath=$(nix eval --raw "$target.xdg.configFile.\"nvim/lua\".source")
-clangPath=$(nix build --no-link --print-out-paths "$target.home.packages" \
-  --apply 'ps: builtins.head (builtins.filter (p: builtins.match "clang-wrapper-.*" p.name != null) ps)')
+clangPath=$(buildHomePackage 'p: builtins.match "clang-wrapper-.*" p.name != null')
 editorHome=$(mktemp -d -t vm-windows-editor-runtime.XXXXXXXX)
 mkdir -p "$editorHome/.config/nvim"
 cp "$initPath" "$editorHome/.config/nvim/init.lua"

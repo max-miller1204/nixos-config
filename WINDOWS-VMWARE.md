@@ -20,6 +20,8 @@ repository. At Max's request the official LazyVim starter is provided instead;
 its source commit and license are recorded in `users/maxm/nvim/README.md`.
 Neovim downloads its plugins on first launch. This is not a claim to reproduce
 Mitchell's unavailable private editor customisations.
+The Neovim wrapper supplies the Tree-sitter CLI so the starter avoids a
+first-launch race in Mason's automatic Tree-sitter installation.
 
 His passwords, SSH/GPG keys, 1Password vault references, private `devtty` script,
 licensed fonts, project dotfiles, and macOS host applications are not installed.

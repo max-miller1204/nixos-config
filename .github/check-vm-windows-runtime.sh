@@ -45,6 +45,6 @@ if ! nix shell --inputs-from "$auditDir" nixpkgs#git nixpkgs#curl nixpkgs#gnumak
   exit 1
 fi
 cat "$editorHome/neovim.log"
-if grep -E 'Error detected while processing|E[0-9]{3}:|Failed to clone lazy.nvim' "$editorHome/neovim.log"; then
+if grep -E 'Error detected while processing|Error in command line:|E[0-9]{3}:|Failed to (clone|run|install)|Unmet requirements' "$editorHome/neovim.log"; then
   exit 1
 fi

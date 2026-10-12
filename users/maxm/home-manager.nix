@@ -71,6 +71,8 @@ in {
     defaultEditor = true;
     viAlias = true;
     vimAlias = true;
+    # The approved LazyVim starter needs this CLI on its first launch.
+    extraPackages = [ pkgs.tree-sitter ];
   };
   programs.nushell.extraConfig = builtins.readFile ./config.nu;
   programs.oh-my-posh = {

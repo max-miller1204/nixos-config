@@ -42,7 +42,7 @@
   xdg.portal = {
     enable = true;
     extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
-    config.common.default = "gtk";
+    config.common.default = lib.mkDefault "gtk";
   };
   programs.firefox.enable = true;
   services.pulseaudio.enable = false;

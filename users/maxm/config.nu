@@ -18,4 +18,3 @@ if ('/opt/homebrew' | path type) == 'dir' {
 if (is-terminal --stdin) {
   $env.GPG_TTY = (tty)
 }
-

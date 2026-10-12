@@ -162,10 +162,11 @@ For subsequent updates, use `git pull --ff-only`, then build and run
 The original Makefile's default target is ARM; specify
 `make switch NIXNAME=vm-windows` if using it for an immediate switch.
 
-The GitHub Actions check builds the entire profile (including desktop
-specialisations) using a CI-only hardware fixture, validates i3/Rofi/Ghostty and
-shell configuration, exercises the display helper under a virtual X server,
-and launches Neovim headlessly to bootstrap LazyVim. It cannot verify VMware's
-GUI behaviour or log in to Max's external accounts. Your actual hardware file
-still needs a build inside the VM. If a new generation fails to boot, select
-the previous working generation from the NixOS boot menu.
+The temporary GitHub Actions workflows, validation scripts, and hardware
+fixture were removed at Max's request after validation and confirmation that
+the installed VM works. The checks covered the full profile and desktop
+specialisations, configuration parsing, interactive Nushell startup, and
+Neovim/LazyVim bootstrap. VMware fullscreen sizing was confirmed in the guest.
+Future updates are built inside the VM using its actual hardware configuration.
+If a new generation fails to boot, select the previous working generation
+from the NixOS boot menu.

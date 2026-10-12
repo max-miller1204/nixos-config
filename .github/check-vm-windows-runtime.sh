@@ -20,7 +20,8 @@ nuPath=$(buildAttr programs.nushell.package)
 NU_CONFIG_CHECK="$auditDir/users/maxm/config.nu" "$nuPath/bin/nu" --no-config-file \
   -c 'if not (nu-check --debug $env.NU_CONFIG_CHECK) { exit 1 }'
 direnvPath=$(buildAttr programs.direnv-instant.finalPackage)
-"$direnvPath/bin/direnv-instant" --help >/dev/null
+"$direnvPath/bin/direnv-instant" hook fish >"$auditDir/direnv-hook.fish"
+"$fishPath/bin/fish" --no-execute "$auditDir/direnv-hook.fish"
 
 nvimPath=$(buildAttr programs.neovim.finalPackage)
 initPath=$(buildAttr 'xdg.configFile."nvim/init.lua".source')

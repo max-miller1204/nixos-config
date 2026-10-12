@@ -40,7 +40,7 @@ client.background       $back
 exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock --nofork
 
 # No background
-exec --no-startup-id xsetroot -solid $back
+exec --no-startup-id xsetroot -solid "$back"
 
 # Keyboard layout settings
 exec --no-startup-id setxkbmap -layout us
@@ -59,7 +59,7 @@ bindsym $mod+o exec rofi -show run
 # start a terminal
 bindsym $mod+n exec ghostty --gtk-single-instance=true
 bindsym $mod+Return exec xfce4-terminal
-bindsym $mod+Ctrl+f exec --no-startup-id xrandr-auto
+bindsym $mod+Ctrl+f exec --no-startup-id xrandr-fullscreen
 bindsym $mod+d split h
 bindsym $mod+Shift+d split v
 

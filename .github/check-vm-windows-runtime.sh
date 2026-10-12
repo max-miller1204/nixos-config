@@ -13,6 +13,11 @@ buildHomePackage() {
     "let ps = (builtins.getFlake \"$auditDir\").nixosConfigurations.vm-windows.config.home-manager.users.maxm.home.packages; in builtins.head (builtins.filter ($1) ps)"
 }
 nuPath=$(buildAttr programs.nushell.package)
+fullscreenPath=$(nix build --no-link --print-out-paths --impure --expr \
+  "let ps = (builtins.getFlake \"$auditDir\").nixosConfigurations.vm-windows.config.environment.systemPackages; in builtins.head (builtins.filter (p: (p.pname or \"\") == \"xrandr-fullscreen\") ps)")
+bash -n "$fullscreenPath/bin/xrandr-fullscreen"
+nix shell --inputs-from "$auditDir" nixpkgs#i3 nixpkgs#xvfb-run \
+  -c xvfb-run -a i3 -C -c "$auditDir/users/maxm/i3"
 if [ "${PROMPT_ONLY:-false}" != "true" ]; then
   ghosttyPath=$(buildHomePackage 'p: (p.pname or "") == "ghostty"')
   fishPath=$(buildAttr programs.fish.package)

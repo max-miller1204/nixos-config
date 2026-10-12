@@ -104,7 +104,7 @@ backup; move the old backup aside and restart `home-manager-maxm.service`.
 | Super+Shift+F | Toggle the focused i3 window's fullscreen mode |
 | Super+R | Resize/move mode; Escape leaves the mode |
 | Super+Backspace | Logout/reboot/shutdown menu |
-| Super+Ctrl+F | Reapply the preferred display resolution |
+| Super+Ctrl+F | Apply Max's native 3072x1920 fullscreen resolution |
 
 Terminal copy/paste uses Ctrl+Shift+C and Ctrl+Shift+V.
 These are Mitchell's keybindings, so Super+D is a split command, not the launcher.
@@ -116,12 +116,18 @@ In VMware, enable **View > Autosize > Autofit Guest**. Also select
 then press **Ctrl+Alt+Enter** to enter VMware fullscreen. A maximized VMware window is
 still windowed; Super+Shift+F only changes the focused window inside i3.
 The desktop tools normally update the resolution as the window changes size.
-If the guest remains small or has borders, run `xrandr-auto` inside the VM or
-press Super+Ctrl+F. The helper discovers connected outputs instead of assuming
-the output is named `Virtual-1`, and also runs once when i3 starts.
-This includes the workaround; fullscreen behaviour still needs verification
-in the actual VMware GUI. The Apple Silicon/Fusion-specific resolution comment
-in the upstream i3 module does not establish a fix for Windows Workstation.
+The `xrandr-auto` helper discovers connected outputs and applies VMware's
+preferred resolution; it also runs once when i3 starts. If Workstation keeps
+advertising the previous window size in fullscreen, press **Super+Ctrl+F** or
+run `xrandr-fullscreen`. This applies the 3072x1920 mode Max confirmed fills
+his screen. It is specific to his display and does not run automatically in
+windowed mode. Run `xrandr-auto` after leaving fullscreen to restore the
+preferred window size. The Apple Silicon/Fusion-specific resolution comment
+in the upstream i3 module is a separate workaround.
+
+The i3 background command quotes its hex color so the shell does not treat
+it as a comment. This applies Mitchell's intended solid dark background
+instead of retaining the tiled NixOS login background.
 
 At Max's request, display settings match Mitchell's public configuration:
 Xft uses 180 DPI, Rofi uses 220 DPI, i3 uses Fira Code 8, and the cursor is

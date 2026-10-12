@@ -61,7 +61,20 @@
     fsType = "fuse./run/current-system/sw/bin/vmhgfs-fuse";
     options = [ "ro" "allow_other" "umask=022" "nofail" "noauto" "x-systemd.automount" ];
   };
-  environment.systemPackages = with pkgs; [ gtkmm3 xfce4-terminal ];
+  environment.systemPackages = with pkgs; [
+    gtkmm3
+    xfce4-terminal
+    # Max's screen is 3072x1920; Workstation sometimes advertises its old
+    # window size in fullscreen. Reapply the mode confirmed in the guest.
+    (writeShellScriptBin "xrandr-fullscreen" ''
+      set -euo pipefail
+      if ! ${pkgs.xrandr}/bin/xrandr --query | ${pkgs.gnugrep}/bin/grep -E '^[[:space:]]+maxm-native[[:space:]]' > /dev/null; then
+        ${pkgs.xrandr}/bin/xrandr --newmode "maxm-native" 400.170 3072 3122 3172 3222 1920 1970 2020 2070 -HSync +VSync
+      fi
+      ${pkgs.xrandr}/bin/xrandr --addmode Virtual-1 "maxm-native"
+      ${pkgs.xrandr}/bin/xrandr --output Virtual-1 --mode "maxm-native"
+    '')
+  ];
   nix.settings.substituters = lib.mkForce [
     "https://cache.nixos.org"
     "https://mitchellh-nixos-config.cachix.org"

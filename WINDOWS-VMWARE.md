@@ -101,7 +101,7 @@ backup; move the old backup aside and restart `home-manager-maxm.service`.
 | Super+Shift+H/J/K/L | Move a window |
 | Super+1 through Super+0 | Switch workspaces |
 | Super+W | Close the focused window |
-| Super+Shift+F | Toggle fullscreen |
+| Super+Shift+F | Toggle the focused i3 window's fullscreen mode |
 | Super+R | Resize/move mode; Escape leaves the mode |
 | Super+Backspace | Logout/reboot/shutdown menu |
 | Super+Ctrl+F | Reapply the preferred display resolution |
@@ -111,7 +111,10 @@ These are Mitchell's keybindings, so Super+D is a split command, not the launche
 
 ## VMware fullscreen sizing
 
-In VMware, enable **View > Autosize > Autofit Guest**, then enter fullscreen.
+In VMware, enable **View > Autosize > Autofit Guest**. Also select
+**Edit > Preferences > Display > Full screen > Autofit guest (change guest resolution)**,
+then press **Ctrl+Alt+Enter** to enter VMware fullscreen. A maximized VMware window is
+still windowed; Super+Shift+F only changes the focused window inside i3.
 The desktop tools normally update the resolution as the window changes size.
 If the guest remains small or has borders, run `xrandr-auto` inside the VM or
 press Super+Ctrl+F. The helper discovers connected outputs instead of assuming

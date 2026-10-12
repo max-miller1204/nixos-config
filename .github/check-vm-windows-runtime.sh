@@ -23,9 +23,11 @@ if [ "${PROMPT_ONLY:-false}" != "true" ]; then
 fi
 ompPath=$(buildAttr programs.oh-my-posh.package)
 atuinPath=$(buildAttr programs.atuin.package)
+direnvPath=$(buildAttr programs.direnv-instant.finalPackage)
+direnvCommand=$(buildAttr programs.direnv.package)
 nuConfig=$(buildAttr 'home.file."/home/maxm/.config/nushell/config.nu".source')
 ompConfig=$(buildAttr 'xdg.configFile."oh-my-posh/config.json".source')
-export PATH="$atuinPath/bin:$ompPath/bin:$PATH"
+export PATH="$nuPath/bin:$atuinPath/bin:$ompPath/bin:$direnvPath/bin:$direnvCommand/bin:$PATH"
 # The CMD_DURATION_MS type error appears only after a real REPL command.
 python3 - "$nuPath/bin/nu" "$nuConfig" "$ompConfig" "$auditDir/omp-repl.log" <<'PY'
 import fcntl, json, os, pty, re, select, shutil, signal, struct, sys, tempfile, termios, time
@@ -45,6 +47,7 @@ if pid == 0:
     init_copy = prompt_home + "/config.nu"
     with open(init_copy, "w") as stream:
         stream.write(config + '\n$env.PROMPT_INDICATOR = "NU_TEST> "\n')
+    os.chdir(prompt_home)
     os.execl(nu, nu, "--env-config", "/dev/null", "--config", init_copy)
 fcntl.ioctl(fd, termios.TIOCSWINSZ, struct.pack("HHHH", 24, 120, 0, 0))
 output = bytearray()
@@ -95,7 +98,6 @@ if not bindings or sorted(json.loads(bindings[-1])) != ["atuin", "atuin_up_arrow
     raise SystemExit("Atuin Ctrl+R and Up-arrow bindings were not both retained")
 PY
 if [ "${PROMPT_ONLY:-false}" = "true" ]; then exit 0; fi
-direnvPath=$(buildAttr programs.direnv-instant.finalPackage)
 "$direnvPath/bin/direnv-instant" hook fish >"$auditDir/direnv-hook.fish"
 "$fishPath/bin/fish" --no-execute "$auditDir/direnv-hook.fish"
 

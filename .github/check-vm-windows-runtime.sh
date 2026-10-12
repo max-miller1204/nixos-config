@@ -12,13 +12,15 @@ buildHomePackage() {
   nix build --no-link --print-out-paths --impure --expr \
     "let ps = (builtins.getFlake \"$auditDir\").nixosConfigurations.vm-windows.config.home-manager.users.maxm.home.packages; in builtins.head (builtins.filter ($1) ps)"
 }
-ghosttyPath=$(buildHomePackage 'p: (p.pname or "") == "ghostty"')
-fishPath=$(buildAttr programs.fish.package)
 nuPath=$(buildAttr programs.nushell.package)
-"$ghosttyPath/bin/ghostty" +validate-config --config-file="$auditDir/users/maxm/ghostty.linux"
-"$fishPath/bin/fish" --no-execute "$auditDir/users/maxm/config.fish"
-NU_CONFIG_CHECK="$auditDir/users/maxm/config.nu" "$nuPath/bin/nu" --no-config-file \
-  -c 'if not (nu-check --debug $env.NU_CONFIG_CHECK) { exit 1 }'
+if [ "${PROMPT_ONLY:-false}" != "true" ]; then
+  ghosttyPath=$(buildHomePackage 'p: (p.pname or "") == "ghostty"')
+  fishPath=$(buildAttr programs.fish.package)
+  "$ghosttyPath/bin/ghostty" +validate-config --config-file="$auditDir/users/maxm/ghostty.linux"
+  "$fishPath/bin/fish" --no-execute "$auditDir/users/maxm/config.fish"
+  NU_CONFIG_CHECK="$auditDir/users/maxm/config.nu" "$nuPath/bin/nu" --no-config-file \
+    -c 'if not (nu-check --debug $env.NU_CONFIG_CHECK) { exit 1 }'
+fi
 ompPath=$(buildAttr programs.oh-my-posh.package)
 "$ompPath/bin/oh-my-posh" init nu --print --config "$auditDir/users/mitchellh/omp.json" >"$auditDir/omp-init.nu"
 printf '\n$env.config.show_banner = false\n$env.PROMPT_INDICATOR = "NU_TEST> "\n' >>"$auditDir/omp-init.nu"
@@ -70,7 +72,8 @@ if status is None:
     if not ended:
         os.kill(pid, signal.SIGKILL)
         _, status = os.waitpid(pid, 0)
-clean = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", output.decode(errors="replace"))
+clean = re.sub(r"\x1b\].*?(?:\x07|\x1b\\)", "", output.decode(errors="replace"), flags=re.S)
+clean = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]|\x1b[78]", "", clean)
 with open(log, "w") as stream:
     stream.write(clean)
 print(clean)

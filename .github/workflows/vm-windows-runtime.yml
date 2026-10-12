@@ -2,6 +2,10 @@ name: VMware editor and shell check
 
 on:
   workflow_dispatch:
+    inputs:
+      prompt_only:
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -19,4 +23,6 @@ jobs:
             substituters = https://cache.nixos.org https://mitchellh-nixos-config.cachix.org https://nix-community.cachix.org
             trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= mitchellh-nixos-config.cachix.org-1:bjEbXJyLrL1HZZHBbO4QALnI5faYZppzkU4D2s0G8RQ= nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs=
       - name: Check terminal, shells, and generated Neovim configuration
+        env:
+          PROMPT_ONLY: ${{ inputs.prompt_only }}
         run: bash .github/check-vm-windows-runtime.sh

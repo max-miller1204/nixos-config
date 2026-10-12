@@ -19,6 +19,51 @@ nuPath=$(buildAttr programs.nushell.package)
 "$fishPath/bin/fish" --no-execute "$auditDir/users/maxm/config.fish"
 NU_CONFIG_CHECK="$auditDir/users/maxm/config.nu" "$nuPath/bin/nu" --no-config-file \
   -c 'if not (nu-check --debug $env.NU_CONFIG_CHECK) { exit 1 }'
+ompPath=$(buildAttr programs.oh-my-posh.package)
+"$ompPath/bin/oh-my-posh" init nu --print --config "$auditDir/users/mitchellh/omp.json" >"$auditDir/omp-init.nu"
+# The CMD_DURATION_MS type error appears only after a real REPL command.
+python3 - "$nuPath/bin/nu" "$auditDir/omp-init.nu" "$auditDir/omp-repl.log" <<'PY'
+import os, pty, re, select, signal, sys, tempfile, time
+nu, init, log = sys.argv[1:]
+pid, fd = pty.fork()
+if pid == 0:
+    os.environ.update(HOME=tempfile.mkdtemp(prefix="nu-prompt-home-"), TERM="xterm-256color")
+    os.execl(nu, nu, "--config", init)
+output = bytearray()
+sent = False
+status = None
+deadline = time.monotonic() + 30
+while time.monotonic() < deadline:
+    if select.select([fd], [], [], 0.2)[0]:
+        try:
+            chunk = os.read(fd, 65536)
+        except OSError:
+            break
+        if not chunk:
+            break
+        output.extend(chunk)
+        if not sent:
+            os.write(fd, b'sleep 100ms\rprint "OMP_PROMPT_CHECK"\rexit\r')
+            sent = True
+    ended, result = os.waitpid(pid, os.WNOHANG)
+    if ended:
+        status = result
+        break
+if status is None:
+    ended, status = os.waitpid(pid, os.WNOHANG)
+    if not ended:
+        os.kill(pid, signal.SIGKILL)
+        _, status = os.waitpid(pid, 0)
+clean = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", output.decode(errors="replace"))
+with open(log, "w") as stream:
+    stream.write(clean)
+print(clean)
+if os.waitstatus_to_exitcode(status) != 0 or not re.search(r"[\r\n]OMP_PROMPT_CHECK[\r\n]", clean):
+    raise SystemExit("Nushell prompt REPL check did not complete")
+if re.search(r"nu::|Error:|expected int|Type mismatch", clean):
+    raise SystemExit("Nushell prompt REPL check reported an error")
+PY
+if [ "${PROMPT_ONLY:-false}" = "true" ]; then exit 0; fi
 direnvPath=$(buildAttr programs.direnv-instant.finalPackage)
 "$direnvPath/bin/direnv-instant" hook fish >"$auditDir/direnv-hook.fish"
 "$fishPath/bin/fish" --no-execute "$auditDir/direnv-hook.fish"

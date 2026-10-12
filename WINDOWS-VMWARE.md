@@ -29,6 +29,9 @@ Git/Jujutsu use Max's identity and do not require Mitchell's signing key.
 The packaged account-based tools use Max's own authentication when configured.
 The public Nushell and Oh My Posh files are wired up without the private vault
 aliases. The Fish SSH-agent setup tolerates an account with no SSH key yet.
+Oh My Posh uses the same pinned unstable package set as Nushell to avoid the
+older generated prompt's string/integer command-duration mismatch. The public
+prompt theme is unchanged.
 
 The pinned direnv-instant source is retained. Its `blocking_envrc_calls_tmux`
 integration test passed on the CI host but failed in Max's VMware build waiting

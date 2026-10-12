@@ -76,6 +76,8 @@ in {
   };
   programs.nushell.extraConfig = builtins.readFile ./config.nu;
   programs.oh-my-posh = {
+    # Match the newer Nushell; the stable prompt assigns a string to an int.
+    package = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.oh-my-posh;
     settings = builtins.fromJSON (builtins.readFile ../mitchellh/omp.json);
     enableBashIntegration = false;
     enableFishIntegration = false;

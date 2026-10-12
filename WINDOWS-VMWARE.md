@@ -106,6 +106,20 @@ This includes the workaround; fullscreen behaviour still needs verification
 in the actual VMware GUI. The Apple Silicon/Fusion-specific resolution comment
 in the upstream i3 module does not establish a fix for Windows Workstation.
 
+Max's display uses 200% scaling: Xft and Rofi use 192 DPI, GTK uses a scale
+factor of 2 with compensating font DPI, and the cursor is 48 pixels. This
+keeps the native resolution while making text and controls readable. Log out
+and back in after changing scaling so newly launched applications inherit it.
+To preview the text size before rebuilding, run:
+
+```sh
+printf 'Xft.dpi: 192\n' | xrdb -merge
+i3-msg restart
+```
+
+This preview lasts for the current session; the Home Manager configuration
+makes it persistent after installing the updated profile.
+
 ## Verify and update
 
 ```sh

@@ -13,11 +13,7 @@ let
       # These refer to Mitchell's private 1Password vault, not to Max's account.
       sessionVariables = builtins.removeAttrs upstream.home.sessionVariables [
         "AMP_API_KEY" "OPENAI_API_KEY"
-      ] // {
-        # Match 192 DPI without applying GTK's font scaling twice.
-        GDK_SCALE = "2";
-        GDK_DPI_SCALE = "0.5";
-      };
+      ];
     };
     programs = upstream.programs // {
       git = upstreamGit // {
@@ -70,7 +66,7 @@ in {
   ];
   xsession.enable = true;
   home.shell.enableNushellIntegration = lib.mkForce true;
-  home.pointerCursor.size = lib.mkForce 48;
+  home.pointerCursor.size = lib.mkForce 128;
   programs.neovim = {
     defaultEditor = true;
     viAlias = true;

@@ -1,6 +1,6 @@
 configuration {
-  dpi: 192;
-  font: "Fira Code 11";
+  dpi: 220;
+  font: "Fira Code 12";
 }
 
 * {

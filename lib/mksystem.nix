@@ -6,6 +6,7 @@ name:
 {
   system,
   user,
+  useOverlays ? true,
   darwin ? false,
   wsl ? false
 }:
@@ -34,13 +35,13 @@ in systemFunc rec {
     # Apply our overlays. Overlays are keyed by system type so we have
     # to go through and apply our system type. We do this first so
     # the overlays are available globally.
-    { nixpkgs.overlays = overlays; }
+    { nixpkgs.overlays = if useOverlays then overlays else []; }
 
     # Allow unfree packages.
     { nixpkgs.config.allowUnfree = true; }
   ] ++ optionals isWSL [
     inputs.nixos-wsl.nixosModules.wsl
-  ] ++ optionals isLinux [
+  ] ++ optionals (isLinux && name != "vm-windows") [
     inputs.nix-snapd.nixosModules.default
   ] ++ optionals darwin [
     # An existing Linux builder is needed to initially bootstrap

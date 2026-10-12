@@ -4,10 +4,10 @@
   environment.systemPackages = with pkgs; [ git gnumake ];
   programs.fish.enable = true;
   programs.nix-ld.enable = true;
-  users.users.max = {
+  users.users.maxm = {
     isNormalUser = true;
-    home = "/home/max";
-    extraGroups = [ "wheel" "docker" ];
+    home = "/home/maxm";
+    extraGroups = [ "networkmanager" "wheel" "docker" ];
     shell = pkgs.fish;
   };
   security.sudo.wheelNeedsPassword = true;

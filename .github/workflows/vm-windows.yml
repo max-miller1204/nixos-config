@@ -1,0 +1,30 @@
+name: VMware NixOS build
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'flake.*'
+      - 'lib/**'
+      - 'machines/vm-windows.nix'
+      - 'machines/hardware/vm-windows.nix'
+      - 'users/maxm/**'
+      - '.github/check-vm-windows.sh'
+      - '.github/fixtures/**'
+      - '.github/workflows/vm-windows.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: DeterminateSystems/nix-installer-action@c5a866b6ab867e88becbed4467b93592bce69f8a # v21
+        with:
+          determinate: false
+      - name: Build NixOS and validate i3 and Rofi
+        run: bash .github/check-vm-windows.sh

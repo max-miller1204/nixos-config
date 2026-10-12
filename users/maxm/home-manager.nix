@@ -1,10 +1,29 @@
 { inputs, ... }:
 { pkgs, ... }: {
   home.stateVersion = "26.05";
-  home.packages = with pkgs; [ bat eza fd fzf gh htop jq ripgrep tree nodejs go ];
+  home.packages = with pkgs; [
+    bat eza fd fzf gh htop jq ripgrep tree nodejs go
+    ghostty rofi xss-lock xsetroot setxkbmap
+  ];
   home.sessionVariables.EDITOR = "nvim";
   home.sessionPath = [ "$HOME/.local/bin" ];
   xdg.enable = true;
+  xsession.enable = true;
+  xresources.extraConfig = builtins.readFile ./Xresources;
+  xdg.configFile = {
+    "i3/config".source = ./i3;
+    "i3status/config".source = ./i3status;
+    "rofi/config.rasi".source = ./rofi;
+    "ghostty/config".text = ''
+      font-family = JetBrains Mono
+      font-size = 12
+      background = 1d1f21
+      foreground = c5c8c6
+      mouse-hide-while-typing = true
+      keybind = ctrl+shift+c=copy_to_clipboard
+      keybind = ctrl+shift+v=paste_from_clipboard
+    '';
+  };
   programs.bash.enable = true;
   programs.fish = {
     enable = true;

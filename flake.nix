@@ -103,7 +103,8 @@
 
     nixosConfigurations.vm-windows = mkSystem "vm-windows" {
       system = "x86_64-linux";
-      user   = "max";
+      user   = "maxm";
+      useOverlays = false;
     };
 
     nixosConfigurations.wsl = mkSystem "wsl" {

@@ -60,9 +60,9 @@ let
 in {
   imports = [ portable ];
   # Ghostty is launched by his i3 config but was not in the public package list.
-  # Compiler tools also let LazyVim build parsers and run project tooling.
+  # His existing Clang compiler builds LazyVim parsers; avoid a GCC bin collision.
   home.packages = with pkgs; [
-    ghostty xss-lock xsetroot setxkbmap gcc gnumake unzip wget go
+    ghostty xss-lock xsetroot setxkbmap gnumake unzip wget go
   ];
   xsession.enable = true;
   home.shell.enableNushellIntegration = lib.mkForce true;

@@ -46,7 +46,11 @@ if pid == 0:
         config = stream.read().replace("/home/maxm", prompt_home)
     init_copy = prompt_home + "/config.nu"
     with open(init_copy, "w") as stream:
-        stream.write(config + '\n$env.PROMPT_INDICATOR = "NU_TEST> "\n')
+        stream.write(config)
+    # User autoload runs after Oh My Posh's vendor autoload sets the indicator.
+    os.makedirs(prompt_home + "/.config/nushell/autoload")
+    with open(prompt_home + "/.config/nushell/autoload/zz-test.nu", "w") as stream:
+        stream.write('$env.PROMPT_INDICATOR = "NU_TEST> "\n')
     os.chdir(prompt_home)
     os.execl(nu, nu, "--env-config", "/dev/null", "--config", init_copy)
 fcntl.ioctl(fd, termios.TIOCSWINSZ, struct.pack("HHHH", 24, 120, 0, 0))

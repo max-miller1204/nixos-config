@@ -14,7 +14,7 @@ buildHomePackage() {
 }
 nuPath=$(buildAttr programs.nushell.package)
 fullscreenPath=$(nix build --no-link --print-out-paths --impure --expr \
-  "let ps = (builtins.getFlake \"$auditDir\").nixosConfigurations.vm-windows.config.environment.systemPackages; in builtins.head (builtins.filter (p: (p.pname or \"\") == \"xrandr-fullscreen\") ps)")
+  "let ps = (builtins.getFlake \"$auditDir\").nixosConfigurations.vm-windows.config.environment.systemPackages; in builtins.head (builtins.filter (p: p.name == \"xrandr-fullscreen\") ps)")
 bash -n "$fullscreenPath/bin/xrandr-fullscreen"
 nix shell --inputs-from "$auditDir" nixpkgs#i3 nixpkgs#xvfb-run \
   -c xvfb-run -a i3 -C -c "$auditDir/users/maxm/i3"
